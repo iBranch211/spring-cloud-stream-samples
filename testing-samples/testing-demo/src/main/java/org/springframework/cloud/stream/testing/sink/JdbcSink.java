@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2017-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,32 +16,38 @@
 
 package org.springframework.cloud.stream.testing.sink;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.cloud.stream.annotation.EnableBinding;
-import org.springframework.cloud.stream.messaging.Sink;
-import org.springframework.context.annotation.Bean;
-import org.springframework.integration.annotation.ServiceActivator;
-import org.springframework.integration.jdbc.JdbcMessageHandler;
-import org.springframework.messaging.MessageHandler;
+import java.util.function.Consumer;
 
 import javax.sql.DataSource;
 
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+import org.springframework.integration.dsl.IntegrationFlow;
+import org.springframework.integration.dsl.IntegrationFlows;
+import org.springframework.integration.jdbc.JdbcMessageHandler;
+import org.springframework.messaging.MessageHandler;
+
 /**
  * The Spring Cloud Stream Sink application,
- * which insert payloads of incoming messages to the FOOBAR table in the RDBMS.
+ * which insert payloads of incoming messages to the SINK table in the RDBMS.
  *
  * @author Artem Bilan
  *
  */
 @SpringBootApplication
-@EnableBinding(Sink.class)
 public class JdbcSink {
 
 	@Bean
-	@ServiceActivator(inputChannel = Sink.INPUT)
+	public IntegrationFlow jdbcConsumerFlow() {
+		return IntegrationFlows.from(Consumer.class, (gateway) -> gateway.beanName("jdbcConsumer"))
+				.handle(jdbcHandler(null))
+				.get();
+	}
+
+	@Bean
 	public MessageHandler jdbcHandler(DataSource dataSource) {
-		return new JdbcMessageHandler(dataSource, "INSERT INTO foobar (value) VALUES (:payload)");
+		return new JdbcMessageHandler(dataSource, "INSERT INTO sink (value) VALUES (:payload)");
 	}
 
 	public static void main(String[] args) {

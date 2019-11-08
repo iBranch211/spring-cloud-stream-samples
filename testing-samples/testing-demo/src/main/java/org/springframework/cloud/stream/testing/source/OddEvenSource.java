@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2017-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,39 +17,31 @@
 package org.springframework.cloud.stream.testing.source;
 
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.cloud.stream.annotation.EnableBinding;
-import org.springframework.cloud.stream.messaging.Source;
 import org.springframework.context.annotation.Bean;
-import org.springframework.integration.annotation.InboundChannelAdapter;
-import org.springframework.integration.annotation.Poller;
-import org.springframework.integration.core.MessageSource;
-import org.springframework.messaging.support.GenericMessage;
 
 /**
  * The Spring Cloud Stream Source application,
- * which generates each 100 milliseconds "foo" or "bar" string in round-robin manner.
+ * which generates every second "odd" or "even" string in round-robin manner.
  *
  * @author Artem Bilan
  *
  */
 @SpringBootApplication
-@EnableBinding(Source.class)
-public class FooBarSource {
+public class OddEvenSource {
 
 	private AtomicBoolean semaphore = new AtomicBoolean(true);
 
 	@Bean
-	@InboundChannelAdapter(channel = Source.OUTPUT, poller = @Poller(fixedDelay = "100"))
-	public MessageSource<String> fooBarStrings() {
-		return () ->
-				new GenericMessage<>(this.semaphore.getAndSet(!this.semaphore.get()) ? "foo" : "bar");
+	public Supplier<String> oddEvenSupplier() {
+		return () -> this.semaphore.getAndSet(!this.semaphore.get()) ? "odd" : "even";
 	}
 
 	public static void main(String[] args) {
-		SpringApplication.run(FooBarSource.class, args);
+		SpringApplication.run(OddEvenSource.class, args);
 	}
 
 }
